@@ -78,7 +78,7 @@ public class CSVManager {
 	public void setSeparator (String separator) {
 		this.separator = separator;
 	}
-	public void setHasSetHeaderLine (boolean hasHeaderLine) {
+	public void setHasHeaderLine (boolean hasHeaderLine) {
 		this.hasHeaderLine = hasHeaderLine;
 	}
 	public void setFile (File file) {	// This allows usage of the same instance for different csv files.
@@ -189,9 +189,9 @@ public class CSVManager {
 			position=this.dataTable.size();					// invalid position -> just add at end of Table
 			
 		this.dataTable.add(position, dataLine);		
-		
-		if (this.numColumns != 0 && numColumns != dataLine.length)	// notice different columns as bad CSV style
-			errorOutput("Mismatch detected in fields per line ("+numColumns+" vs. "+dataLine.length);
+		if (!ignoreDiffColumns)
+			if (this.numColumns != 0 && numColumns != dataLine.length)	// notice different columns as bad CSV style
+				errorOutput("Mismatch detected in fields per line ("+numColumns+" vs. "+dataLine.length);
 		
 		this.numColumns = dataLine.length;
 	}
@@ -232,7 +232,7 @@ public class CSVManager {
 	public void addHeaderDataLine (String[] headerDataLine) {
 		this.addDataLine(0,headerDataLine);
 		if (!this.hasHeaderLine)
-			setHasSetHeaderLine(true);
+			setHasHeaderLine(true);
 	}
 	
 	public void addHeaderCSVLine (String CSVHeaderLine) {
@@ -299,7 +299,7 @@ public class CSVManager {
 	public boolean removeHeaderLine () {
 		if (this.hasHeaderLine && this.size()>0) {
 			this.dataTable.remove(getHeaderLine());		
-			setHasSetHeaderLine(false);
+			setHasHeaderLine(false);
 			return true;
 		}
 		return false;
@@ -357,12 +357,12 @@ public class CSVManager {
 	}
 	
 	public String getDataField(int lineIndex, int columnIndex) {
-		if (this.hasHeaderLine)
-			lineIndex++;
-			
 		if (getDataLine(lineIndex) == null)
 			return null;	// no additional error handling necessary
-		
+			
+		if (this.hasHeaderLine)
+			lineIndex++;	
+			
 		try {
 			return this.dataTable.get(lineIndex)[columnIndex];
 		}
@@ -388,6 +388,7 @@ public class CSVManager {
 		if (getDataLine(lineIndex) == null)
 			return null;
 			
+			//~ System.out.println("LineIndex: " + lineIndex);	//TEST
 		StringBuilder lineStringBuilder = new StringBuilder(getDataField(lineIndex, 0));
 			
 		for (int i=1; i<numColumnsInLine(lineIndex); i++)
@@ -412,7 +413,7 @@ public class CSVManager {
 			dataString = lineToString(0);
 		
 		for (int i=1; i<this.numLines(); i++)
-			dataString = System.lineSeparator() + lineToString(i);
+			dataString += System.lineSeparator() + lineToString(i);
 		
 		return dataString;
 	}
@@ -422,7 +423,7 @@ public class CSVManager {
 // Helping Methods
 // ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 			
-	private void errorOutput(String errorMessage) {
+	protected void errorOutput(String errorMessage) {
 			// used to manage error output that can be controlled with "allowErrorOutput" and by defining a certain "errorOutputComponent"
 		if (!this.allowErrorOutput)
 			return;
